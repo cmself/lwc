@@ -31,15 +31,25 @@ import {
     childrenGetter,
     childElementCountGetter,
     firstElementChildGetter,
+    getElementsByClassName as elementGetElementsByClassName,
+    getElementsByTagName as elementGetElementsByTagName,
+    getElementsByTagNameNS as elementGetElementsByTagNameNS,
     innerHTMLGetter,
+    innerHTMLSetter,
     lastElementChildGetter,
     outerHTMLSetter,
     outerHTMLGetter,
+    querySelectorAll as elementQuerySelectorAll,
     shadowRootGetter as originalShadowRootGetter,
 } from '../env/element';
 import { createStaticNodeList } from '../shared/static-node-list';
 import { createStaticHTMLCollection } from '../shared/static-html-collection';
-import { getInternalChildNodes, hasMountedChildren } from './node';
+import {
+    getNodeKey,
+    getInternalChildNodes,
+    hasMountedChildren,
+    getNodeNearestOwnerKey,
+} from './node';
 import {
     innerHTMLSetter,
     getElementsByClassName as elementGetElementsByClassName,
