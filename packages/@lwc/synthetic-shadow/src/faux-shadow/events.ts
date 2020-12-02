@@ -175,41 +175,39 @@ function getEventMap(elm: EventTarget): ListenerMap {
 // Using a WeakMap instead of a WeakSet because this one works in IE11 :(
 const eventsComingFromShadowRoot: WeakMap<Event, 1> = new WeakMap();
 
+function isEventComingFromShadowRoot(event: Event): boolean {
+    return eventsComingFromShadowRoot.has(event);
+}
+
 export function setEventFromShadowRoot(event: Event) {
     eventsComingFromShadowRoot.set(event, 1);
 }
 
-const shadowRootEventListenerMap: WeakMap<EventListener, WrappedListener> = new WeakMap();
+const shadowRootEventListenerMap: WeakMap<
+    EventListenerOrEventListenerObject,
+    WrappedListener
+> = new WeakMap();
 
 function getWrappedShadowRootListener(
     sr: SyntheticShadowRootInterface,
-    listener: EventListener
+    listener: EventListenerOrEventListenerObject
 ): WrappedListener {
-    if (!isFunction(listener)) {
-        throw new TypeError(); // avoiding problems with non-valid listeners
-    }
     let wrappedListener = shadowRootEventListenerMap.get(listener);
     if (isUndefined(wrappedListener)) {
         wrappedListener = function (event: Event) {
-            // * if the event is dispatched directly on the host, it is not observable from root
-            // * if the event is dispatched in an element that does not belongs to the shadow and it is not composed,
-            //   it is not observable from the root
-            const { composed } = event;
             const target = eventTargetGetter.call(event);
             const currentTarget = eventCurrentTargetGetter.call(event);
-            if (target !== currentTarget) {
-                const rootNode = getRootNodeHost(
-                    target as Node /* because wrapping on shadowRoot */,
-                    {
-                        composed,
-                    }
-                );
 
-                if (
-                    isChildNode(rootNode as HTMLElement, currentTarget as Node) ||
-                    (composed === false && rootNode === currentTarget)
-                ) {
+            // The event was dispatched from neither the host nor the shadow root.
+            const isEventComingFromSubtree = target !== currentTarget;
+
+            // Events dispatched on shadowRoot instances are marked as such. Otherwise, it would be
+            // difficult to distinguish them from events that are dispatched on the host instance.
+            if (isEventComingFromSubtree || isEventComingFromShadowRoot(event)) {
+                if (typeof listener === 'function') {
                     listener.call(sr, event);
+                } else {
+                    listener.handleEvent && listener.handleEvent(event);
                 }
             }
         } as WrappedListener;
