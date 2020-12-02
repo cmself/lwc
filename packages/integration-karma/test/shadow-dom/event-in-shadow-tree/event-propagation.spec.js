@@ -202,7 +202,7 @@ function createNestedShadowTree(parentNode) {
     return extractDataIds(elm);
 }
 
-describe('event propagation in nested shadow tree', () => {
+describe('composed event propagation in nested shadow tree', () => {
     let nodes;
     beforeEach(() => {
         nodes = createNestedShadowTree(document.body);
@@ -275,7 +275,7 @@ describe('event propagation in nested shadow tree', () => {
         });
     });
 
-    it('propagate event from a inner host', () => {
+    it('propagate event from an inner host', () => {
         const logs = dispatchEventWithLog(
             nodes['x-shadow-tree'],
             new CustomEvent('test', { composed: true, bubbles: true })
@@ -297,6 +297,75 @@ describe('event propagation in nested shadow tree', () => {
             [document.body, nodes['x-nested-shadow-tree'], composedPath],
             [document.documentElement, nodes['x-nested-shadow-tree'], composedPath],
             [document, nodes['x-nested-shadow-tree'], composedPath],
+        ]);
+    });
+});
+
+describe('non-composed event propagation in nested shadow tree', () => {
+    let nodes;
+    beforeEach(() => {
+        nodes = createNestedShadowTree(document.body);
+    });
+
+    it('propagate event from a child element', () => {
+        const logs = dispatchEventWithLog(
+            nodes.span,
+            new CustomEvent('test', { composed: false, bubbles: true })
+        );
+
+        const composedPath = [nodes.span, nodes.div, nodes['x-shadow-tree'].shadowRoot];
+        expect(logs).toEqual([
+            [nodes.span, nodes.span, composedPath],
+            [nodes.div, nodes.span, composedPath],
+            [nodes['x-shadow-tree'].shadowRoot, nodes.span, composedPath],
+            // The following three targets do not receive the event in native shadow dom:
+            [document.body, null, composedPath],
+            [document.documentElement, null, composedPath],
+            [document, null, composedPath],
+        ]);
+    });
+
+    it('propagate event from a child element added via lwc:dom="manual"', () => {
+        // Fire the event in next macrotask to allow time for the MO to key the manually inserted nodes
+        return new Promise((resolve) => {
+            setTimeout(resolve);
+        }).then(() => {
+            const logs = dispatchEventWithLog(
+                nodes['span-manual'],
+                new CustomEvent('test', { composed: false, bubbles: true })
+            );
+
+            const composedPath = [
+                nodes['span-manual'],
+                nodes['div-manual'],
+                nodes['x-shadow-tree'].shadowRoot,
+            ];
+            expect(logs).toEqual([
+                [nodes['span-manual'], nodes['span-manual'], composedPath],
+                [nodes['div-manual'], nodes['span-manual'], composedPath],
+                [nodes['x-shadow-tree'].shadowRoot, nodes['span-manual'], composedPath],
+                // The following three targets do not receive the event in native shadow dom:
+                [document.body, null, composedPath],
+                [document.documentElement, null, composedPath],
+                [document, null, composedPath],
+            ]);
+        });
+    });
+
+    it('propagate event from an inner host', () => {
+        const logs = dispatchEventWithLog(
+            nodes['x-shadow-tree'],
+            new CustomEvent('test', { composed: false, bubbles: true })
+        );
+
+        const composedPath = [nodes['x-shadow-tree'], nodes['x-nested-shadow-tree'].shadowRoot];
+        expect(logs).toEqual([
+            [nodes['x-shadow-tree'], nodes['x-shadow-tree'], composedPath],
+            [nodes['x-nested-shadow-tree'].shadowRoot, nodes['x-shadow-tree'], composedPath],
+            // The following three targets do not receive the event in native shadow dom:
+            [document.body, null, composedPath],
+            [document.documentElement, null, composedPath],
+            [document, null, composedPath],
         ]);
     });
 });
