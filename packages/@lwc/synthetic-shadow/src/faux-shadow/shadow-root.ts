@@ -6,6 +6,7 @@
  */
 import {
     ArrayFilter,
+    ArraySlice,
     assign,
     create,
     defineProperties,
@@ -18,7 +19,11 @@ import {
     getHiddenField,
     setHiddenField,
 } from '@lwc/shared';
-import { addShadowRootEventListener, removeShadowRootEventListener } from './events';
+import {
+    addShadowRootEventListener,
+    removeShadowRootEventListener,
+    setEventFromShadowRoot,
+} from './events';
 import {
     shadowRootQuerySelector,
     shadowRootQuerySelectorAll,
@@ -208,6 +213,18 @@ const ShadowRootDescriptors = {
         configurable: true,
         get(this: SyntheticShadowRootInterface): boolean {
             return getInternalSlot(this).delegatesFocus;
+        },
+    },
+    dispatchEvent: {
+        enumerable: true,
+        configurable: true,
+        value(this: SyntheticShadowRootInterface, evt: Event): boolean {
+            // This patch is needed to support the case where an event is dispatched directly into
+            // the shadowRoot instance as opposed to an event that is dispatched directly on the
+            // host instance. We need to mark the event to make sure that it is a valid observable
+            // event for the shadowRoot.
+            setEventFromShadowRoot(evt);
+            return dispatchEvent.apply(getHost(this), ArraySlice.call(arguments) as [Event]);
         },
     },
     elementFromPoint: {

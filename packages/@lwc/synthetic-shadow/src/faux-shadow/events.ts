@@ -172,6 +172,13 @@ function getEventMap(elm: EventTarget): ListenerMap {
     return listenerInfo;
 }
 
+// Using a WeakMap instead of a WeakSet because this one works in IE11 :(
+const eventsComingFromShadowRoot: WeakMap<Event, 1> = new WeakMap();
+
+export function setEventFromShadowRoot(event: Event) {
+    eventsComingFromShadowRoot.set(event, 1);
+}
+
 const shadowRootEventListenerMap: WeakMap<EventListener, WrappedListener> = new WeakMap();
 
 function getWrappedShadowRootListener(
@@ -181,9 +188,9 @@ function getWrappedShadowRootListener(
     if (!isFunction(listener)) {
         throw new TypeError(); // avoiding problems with non-valid listeners
     }
-    let shadowRootWrappedListener = shadowRootEventListenerMap.get(listener);
-    if (isUndefined(shadowRootWrappedListener)) {
-        shadowRootWrappedListener = function (event: Event) {
+    let wrappedListener = shadowRootEventListenerMap.get(listener);
+    if (isUndefined(wrappedListener)) {
+        wrappedListener = function (event: Event) {
             // * if the event is dispatched directly on the host, it is not observable from root
             // * if the event is dispatched in an element that does not belongs to the shadow and it is not composed,
             //   it is not observable from the root
@@ -206,13 +213,10 @@ function getWrappedShadowRootListener(
                 }
             }
         } as WrappedListener;
-        shadowRootWrappedListener!.placement = EventListenerContext.SHADOW_ROOT_LISTENER;
-        if (process.env.NODE_ENV !== 'production') {
-            shadowRootWrappedListener!.original = listener; // for logging purposes
-        }
-        shadowRootEventListenerMap.set(listener, shadowRootWrappedListener);
+        wrappedListener.placement = EventListenerContext.SHADOW_ROOT_LISTENER;
+        shadowRootEventListenerMap.set(listener, wrappedListener);
     }
-    return shadowRootWrappedListener;
+    return wrappedListener;
 }
 
 const customElementEventListenerMap: WeakMap<EventListener, WrappedListener> = new WeakMap();
