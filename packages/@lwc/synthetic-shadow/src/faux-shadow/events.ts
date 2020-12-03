@@ -197,13 +197,33 @@ function getWrappedShadowRootListener(
         wrappedListener = function (event: Event) {
             const target = eventTargetGetter.call(event);
             const currentTarget = eventCurrentTargetGetter.call(event);
+            const { composed } = event;
 
-            // The event was dispatched from neither the host nor the shadow root.
-            const isEventComingFromSubtree = target !== currentTarget;
+            let invokeListener = false;
 
-            // Events dispatched on shadowRoot instances are marked as such. Otherwise, it would be
-            // difficult to distinguish them from events that are dispatched on the host instance.
-            if (isEventComingFromSubtree || isEventComingFromShadowRoot(event)) {
+            // Confusing! Remember that in synthetic-shadow, roots do not have a physical presence
+            // in the DOM and dispatching an event on a root actually results in the event getting
+            // dispatched on its corresponding host.
+            if (target === currentTarget && !isEventComingFromShadowRoot(event)) {
+                // Do not invoke if the event was dispatched directly on the current root's
+                // corresponding host.
+                invokeListener = false;
+            } else if (composed) {
+                // If the event is composed, the only case it should not invoke the listener is the
+                // case above since this root's corresponding host would have its own listener.
+                invokeListener = true;
+            } else {
+                // If the event is non-composed, only invoke the listener if the element that this
+                // event was dispatched on (target) is in the root that this wrapped listener is
+                // bound to.
+                const rootNodeHost = currentTarget;
+                const targetRootNodeHost = getRootNodeHost(target as Node, { composed: false });
+                if (rootNodeHost === targetRootNodeHost) {
+                    invokeListener = true;
+                }
+            }
+
+            if (invokeListener) {
                 if (typeof listener === 'function') {
                     listener.call(sr, event);
                 } else {
