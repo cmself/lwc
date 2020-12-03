@@ -314,15 +314,20 @@ describe('non-composed event propagation in nested shadow tree', () => {
         );
 
         const composedPath = [nodes.span, nodes.div, nodes['x-shadow-tree'].shadowRoot];
-        expect(logs).toEqual([
+        const expectedLogs = [
             [nodes.span, nodes.span, composedPath],
             [nodes.div, nodes.span, composedPath],
             [nodes['x-shadow-tree'].shadowRoot, nodes.span, composedPath],
-            // The following three targets do not receive the event in native shadow dom:
-            [document.body, null, composedPath],
-            [document.documentElement, null, composedPath],
-            [document, null, composedPath],
-        ]);
+        ];
+        if (!process.env.NATIVE_SHADOW) {
+            // TODO [#1569]: Listeners on the following targets should not be invoked when the event is non-composed.
+            expectedLogs.push(
+                [document.body, null, composedPath],
+                [document.documentElement, null, composedPath],
+                [document, null, composedPath]
+            );
+        }
+        expect(logs).toEqual(expectedLogs);
     });
 
     it('propagate event from a child element added via lwc:dom="manual"', () => {
@@ -340,15 +345,20 @@ describe('non-composed event propagation in nested shadow tree', () => {
                 nodes['div-manual'],
                 nodes['x-shadow-tree'].shadowRoot,
             ];
-            expect(logs).toEqual([
+            const expectedLogs = [
                 [nodes['span-manual'], nodes['span-manual'], composedPath],
                 [nodes['div-manual'], nodes['span-manual'], composedPath],
                 [nodes['x-shadow-tree'].shadowRoot, nodes['span-manual'], composedPath],
-                // The following three targets do not receive the event in native shadow dom:
-                [document.body, null, composedPath],
-                [document.documentElement, null, composedPath],
-                [document, null, composedPath],
-            ]);
+            ];
+            if (!process.env.NATIVE_SHADOW) {
+                // TODO [#1569]: Listeners on the following targets should not be invoked when the event is non-composed.
+                expectedLogs.push(
+                    [document.body, null, composedPath],
+                    [document.documentElement, null, composedPath],
+                    [document, null, composedPath]
+                );
+            }
+            expect(logs).toEqual(expectedLogs);
         });
     });
 
@@ -359,14 +369,19 @@ describe('non-composed event propagation in nested shadow tree', () => {
         );
 
         const composedPath = [nodes['x-shadow-tree'], nodes['x-nested-shadow-tree'].shadowRoot];
-        expect(logs).toEqual([
+        const expectedLogs = [
             [nodes['x-shadow-tree'], nodes['x-shadow-tree'], composedPath],
             [nodes['x-nested-shadow-tree'].shadowRoot, nodes['x-shadow-tree'], composedPath],
-            // The following three targets do not receive the event in native shadow dom:
-            [document.body, null, composedPath],
-            [document.documentElement, null, composedPath],
-            [document, null, composedPath],
-        ]);
+        ];
+        if (!process.env.NATIVE_SHADOW) {
+            // TODO [#1569]: Listeners on the following targets should not be invoked when the event is non-composed.
+            expectedLogs.push(
+                [document.body, null, composedPath],
+                [document.documentElement, null, composedPath],
+                [document, null, composedPath]
+            );
+        }
+        expect(logs).toEqual(expectedLogs);
     });
 });
 
