@@ -172,15 +172,14 @@ function getEventMap(elm: EventTarget): ListenerMap {
     return listenerInfo;
 }
 
-// Using a WeakMap instead of a WeakSet because this one works in IE11 :(
-const eventsComingFromShadowRoot: WeakMap<Event, 1> = new WeakMap();
+const eventsDispatchedOnShadowRoot: WeakSet<Event> = new WeakSet();
 
 function isEventComingFromShadowRoot(event: Event): boolean {
-    return eventsComingFromShadowRoot.has(event);
+    return eventsDispatchedOnShadowRoot.has(event);
 }
 
 export function setEventFromShadowRoot(event: Event) {
-    eventsComingFromShadowRoot.set(event, 1);
+    eventsDispatchedOnShadowRoot.add(event);
 }
 
 const shadowRootEventListenerMap: WeakMap<

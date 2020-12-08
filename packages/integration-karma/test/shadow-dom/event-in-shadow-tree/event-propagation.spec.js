@@ -202,7 +202,7 @@ function createNestedShadowTree(parentNode) {
     return extractDataIds(elm);
 }
 
-describe('composed event propagation in nested shadow tree', () => {
+describe('composed and bubbling event propagation in nested shadow tree', () => {
     let nodes;
     beforeEach(() => {
         nodes = createNestedShadowTree(document.body);
@@ -301,7 +301,7 @@ describe('composed event propagation in nested shadow tree', () => {
     });
 });
 
-describe('non-composed event propagation in nested shadow tree', () => {
+describe('non-composed and bubbling event propagation in nested shadow tree', () => {
     let nodes;
     beforeEach(() => {
         nodes = createNestedShadowTree(document.body);
