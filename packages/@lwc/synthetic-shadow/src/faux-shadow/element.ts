@@ -44,19 +44,7 @@ import {
 } from '../env/element';
 import { createStaticNodeList } from '../shared/static-node-list';
 import { createStaticHTMLCollection } from '../shared/static-html-collection';
-import {
-    getNodeKey,
-    getInternalChildNodes,
-    hasMountedChildren,
-    getNodeNearestOwnerKey,
-} from './node';
-import {
-    innerHTMLSetter,
-    getElementsByClassName as elementGetElementsByClassName,
-    getElementsByTagName as elementGetElementsByTagName,
-    getElementsByTagNameNS as elementGetElementsByTagNameNS,
-    querySelectorAll as elementQuerySelectorAll,
-} from '../env/element';
+import { getInternalChildNodes, hasMountedChildren } from './node';
 import { getOuterHTML } from '../3rdparty/polymer/outer-html';
 import {
     getNodeKey,
